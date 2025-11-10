@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Trading - Electica Energy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.birds.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sage-50: #f6f7f6;
+            --sage-100: #e3e7e3;
+            --sage-200: #c7d0c7;
+            --sage-300: #a3b3a3;
+            --sage-400: #7a907a;
+            --sage-500: #5c7359;
+            --sage-600: #495d47;
+            --sage-700: #3d4d3b;
+            --sage-800: #334032;
+            --sage-900: #2b352b;
+            
+            --charcoal-50: #f6f6f6;
+            --charcoal-100: #e7e7e7;
+            --charcoal-200: #d1d1d1;
+            --charcoal-300: #b0b0b0;
+            --charcoal-400: #888888;
+            --charcoal-500: #6d6d6d;
+            --charcoal-600: #5d5d5d;
+            --charcoal-700: #4f4f4f;
+            --charcoal-800: #454545;
+            --charcoal-900: #3d3d3d;
+            
+            --accent-green: #22c55e;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-indigo: #6366f1;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--sage-50) 0%, var(--charcoal-50) 100%);
+            min-height: 100vh;
+        }
+        
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 8px 16px;
+            color: var(--charcoal-600);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            color: var(--charcoal-900);
+        }
+        
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--sage-700);
+            font-weight: 600;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--sage-700), var(--charcoal-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #vanta-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .trading-card {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background-color: var(--accent-green); }
+        .status-warning { background-color: var(--accent-orange); }
+        .status-critical { background-color: var(--accent-red); }
+        
+        .price-ticker {
+            font-family: 'Montserrat', monospace;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+        
+        .revenue-display {
+            font-family: 'Montserrat', monospace;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .trading-button {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .trading-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .trading-button:active {
+            transform: translateY(0);
+        }
+        
+        .order-book {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .order-row {
+            transition: all 0.2s ease;
+        }
+        
+        .order-row:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .bid-row {
+            border-left: 3px solid var(--accent-green);
+        }
+        
+        .ask-row {
+            border-left: 3px solid var(--accent-red);
+        }
+        
+        .market-depth-bar {
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-red));
+            border-radius: 2px;
+            margin: 2px 0;
+        }
+        
+        .position-card {
+            border-left: 4px solid var(--accent-blue);
+        }
+        
+        .profit-positive {
+            color: var(--accent-green);
+        }
+        
+        .profit-negative {
+            color: var(--accent-red);
+        }
+        
+        .trading-animation {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Vanta.js Background -->
+    <div id="vanta-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="relative z-10 glass-effect border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <!-- Electica Logo -->
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-display text-2xl font-bold gradient-text">Electica Energy</h1>
+                        <p class="text-sm text-charcoal-600">AI Battery Intelligence & Energy Trading Platform</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-1">
+                    <a href="index.html" class="nav-link">Dashboard</a>
+                    <a href="analytics.html" class="nav-link">Analytics</a>
+                    <a href="configuration.html" class="nav-link">Configuration</a>
+                    <a href="reports.html" class="nav-link">Reports</a>
+                    <a href="trading.html" class="nav-link active">Energy Trading</a>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-healthy trading-animation"></div>
+                        <span class="text-sm text-charcoal-600 font-medium">Trading Active</span>
+                    </div>
+                    <div class="text-sm text-charcoal-600">
+                        <span class="font-medium">P&L Today:</span> <span class="revenue-display text-green-600">+$47,892</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        <!-- Header Section -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-display text-4xl font-bold text-charcoal-900 mb-2">Energy Trading Hub</h2>
+                    <p class="text-xl text-charcoal-600">Tesla Autobidder Equivalent - Real-time Energy Markets</p>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button class="trading-button px-6 py-3 bg-green-600 text-white rounded-lg font-medium" onclick="executeBuyOrder()">
+                        Buy Energy
+                    </button>
+                    <button class="trading-button px-6 py-3 bg-red-600 text-white rounded-lg font-medium" onclick="executeSellOrder()">
+                        Sell Energy
+                    </button>
+                    <button class="trading-button px-6 py-3 bg-blue-600 text-white rounded-lg font-medium" onclick="enableAutoTrading()">
+                        Auto Trading
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Overview -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Current Market Price -->
+            <div class="trading-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-charcoal-900">Market Price</h3>
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="price-ticker text-3xl font-bold text-blue-600 mb-2" id="marketPrice">$0.1247/kWh</div>
+                <div class="text-sm text-charcoal-600 mb-2">
+                    <span class="text-green-600">↑ 2.3%</span> vs 24h ago
+                </div>
+                <div class="text-xs text-charcoal-600">
+                    Last Update: <span id="lastUpdate">2 sec ago</span>
+                </div>
+            </div>
+
+            <!-- Trading Volume -->
+            <div class="trading-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-charcoal-900">24h Volume</h3>
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-green-600 mb-2">2,847 MWh</div>
+                <div class="text-sm text-charcoal-600 mb-2">
+                    <span class="text-green-600">↑ 15.7%</span> vs yesterday
+                </div>
+                <div class="text-xs text-charcoal-600">
+                    Value: $354,920
+                </div>
+            </div>
+
+            <!-- Open Positions -->
+            <div class="trading-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-charcoal-900">Open Positions</h3>
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-purple-600 mb-2">156 MW</div>
+                <div class="text-sm text-charcoal-600 mb-2">
+                    <span class="text-green-600">Long</span> position
+                </div>
+                <div class="text-xs text-charcoal-600">
+                    Avg Entry: $0.118/kWh
+                </div>
+            </div>
+
+            <!-- Daily P&L -->
+            <div class="trading-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-charcoal-900">Daily P&L</h3>
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="revenue-display text-3xl font-bold profit-positive mb-2">+$47,892</div>
+                <div class="text-sm text-charcoal-600 mb-2">
+                    <span class="text-green-600">↑ 23.4%</span> vs target
+                </div>
+                <div class="text-xs text-charcoal-600">
+                    Sharpe Ratio: 1.87
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Interface -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Order Book -->
+            <div class="trading-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Order Book</h3>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors" onclick="refreshOrderBook()">
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Order Book Table -->
+                <div class="space-y-2">
+                    <div class="grid grid-cols-3 text-xs font-medium text-charcoal-600 mb-2">
+                        <div>Price ($/kWh)</div>
+                        <div class="text-right">Volume (MWh)</div>
+                        <div class="text-right">Time</div>
+                    </div>
+                    
+                    <!-- Asks (Sell Orders) -->
+                    <div class="space-y-1 mb-4">
+                        <h4 class="text-xs font-medium text-red-600 mb-2">SELL ORDERS</h4>
+                        <div class="order-book order-row ask-row p-2 rounded text-sm" data-price="0.1250" data-volume="45">
+                            <div class="grid grid-cols-3">
+                                <div class="text-red-600 font-medium">0.1250</div>
+                                <div class="text-right text-charcoal-900">45</div>
+                                <div class="text-right text-charcoal-600">14:32:15</div>
+                            </div>
+                            <div class="market-depth-bar" style="width: 22.5%"></div>
+                        </div>
+                        <div class="order-book order-row ask-row p-2 rounded text-sm" data-price="0.1248" data-volume="78">
+                            <div class="grid grid-cols-3">
+                                <div class="text-red-600 font-medium">0.1248</div>
+                                <div class="text-right text-charcoal-900">78</div>
+                                <div class="text-right text-charcoal-600">14:31:42</div>
+                            </div>
+                            <div class="market-depth-bar" style="width: 39%"></div>
+                        </div>
+                        <div class="order-book order-row ask-row p-2 rounded text-sm" data-price="0.1247" data-volume="23">
+                            <div class="grid grid-cols-3">
+                                <div class="text-red-600 font-medium">0.1247</div>
+                                <div class="text-right text-charcoal-900">23</div>
+                                <div class="text-right text-charcoal-600">14:31:38</div>
+                            </div>
+                            <div class="market-depth-bar" style="width: 11.5%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Price -->
+                    <div class="bg-blue-100 p-3 rounded-lg text-center mb-4">
+                        <div class="text-lg font-bold text-blue-600" id="currentBidPrice">$0.1245</div>
+                        <div class="text-xs text-blue-600">Current Market Price</div>
+                    </div>
+                    
+                    <!-- Bids (Buy Orders) -->
+                    <div class="space-y-1">
+                        <h4 class="text-xs font-medium text-green-600 mb-2">BUY ORDERS</h4>
+                        <div class="order-book order-row bid-row p-2 rounded text-sm" data-price="0.1243" data-volume="67">
+                            <div class="grid grid-cols-3">
+                                <div class="text-green-600 font-medium">0.1243</div>
+                                <div class="text-right text-charcoal-900">67</div>
+                                <div class="text-right text-charcoal-600">14:32:18</div>
+                            </div>
+                            <div class="market-depth-bar" style="width: 33.5%"></div>
+                        </div>
+                        <div class="order-book order-row bid-row p-2 rounded text-sm" data-price="0.1241" data-volume="34">
+                            <div class="grid grid-cols-3">
+                                <div class="text-green-600 font-medium">0.1241</div>
+                                <div class="text-right text-charcoal-900">34</div>
+                                <div class="text-right text-charcoal-600">14:31:55</div>
+                            </div>
+                            <div class="market-depth-bar" style="width: 17%"></div>
+                        </div>
+                        <div class="order-book order-row bid-row p-2 rounded text-sm" data-price="0.1239" data-volume="89">
+                            <div class="grid grid-cols-3">
+                                <div class="text-green-600 font-medium">0.1239</div>
+                                <div class="text-right text-charcoal-900">89</div>
+                                <div class="text-right text-charcoal-600">14:31:22</div>
+                            </div>
+                            <div class="market-depth-bar" style="width: 44.5%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Order Entry -->
+                <div class="mt-6 pt-6 border-t border-white/20">
+                    <h4 class="text-sm font-medium text-charcoal-900 mb-3">Quick Order</h4>
+                    <div class="space-y-3">
+                        <div class="flex space-x-2">
+                            <input type="number" placeholder="Price" class="flex-1 p-2 text-sm border border-gray-300 rounded-lg" id="orderPrice" step="0.0001">
+                            <input type="number" placeholder="Volume" class="flex-1 p-2 text-sm border border-gray-300 rounded-lg" id="orderVolume">
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="flex-1 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" onclick="placeBuyOrder()">
+                                Buy
+                            </button>
+                            <button class="flex-1 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors" onclick="placeSellOrder()">
+                                Sell
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Chart -->
+            <div class="trading-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Price Chart</h3>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors" onclick="changeTimeframe('1h')">1H</button>
+                        <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg" onclick="changeTimeframe('4h')">4H</button>
+                        <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors" onclick="changeTimeframe('1d')">1D</button>
+                        <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors" onclick="changeTimeframe('1w')">1W</button>
+                    </div>
+                </div>
+                
+                <div id="priceChart" class="h-80"></div>
+                
+                <!-- Technical Indicators -->
+                <div class="mt-4 pt-4 border-t border-white/20">
+                    <div class="grid grid-cols-2 gap-4 text-xs text-charcoal-600">
+                        <div>
+                            <div class="font-medium text-charcoal-900">RSI (14)</div>
+                            <div class="text-blue-600">67.3 - Overbought</div>
+                        </div>
+                        <div>
+                            <div class="font-medium text-charcoal-900">MACD</div>
+                            <div class="text-green-600">Bullish Crossover</div>
+                        </div>
+                        <div>
+                            <div class="font-medium text-charcoal-900">Bollinger Bands</div>
+                            <div class="text-orange-600">Upper Band Touch</div>
+                        </div>
+                        <div>
+                            <div class="font-medium text-charcoal-900">Volume Profile</div>
+                            <div class="text-purple-600">High Activity Zone</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio & Positions -->
+            <div class="trading-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Portfolio</h3>
+                    <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors" onclick="refreshPortfolio()">
+                        Refresh
+                    </button>
+                </div>
+                
+                <!-- Current Positions -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-medium text-charcoal-900 mb-3">Current Positions</h4>
+                    <div class="space-y-3">
+                        <div class="position-card p-3 bg-white/30 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-charcoal-900">Long Position</span>
+                                <span class="text-xs text-green-600 profit-positive">+$12,450</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 text-xs text-charcoal-600">
+                                <div>Size: 156 MW</div>
+                                <div>Entry: $0.118</div>
+                                <div>Current: $0.125</div>
+                            </div>
+                            <div class="mt-2">
+                                <button class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors" onclick="closePosition('long')">
+                                    Close Position
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="position-card p-3 bg-white/30 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-medium text-charcoal-900">V2G Services</span>
+                                <span class="text-xs text-green-600 profit-positive">+$8,920</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 text-xs text-charcoal-600">
+                                <div>Capacity: 89 MW</div>
+                                <div>Rate: $35/MW/h</div>
+                                <div>Duration: 6h</div>
+                            </div>
+                            <div class="mt-2">
+                                <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" onclick="extendV2GService()">
+                                    Extend Service
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Portfolio Summary -->
+                <div class="pt-4 border-t border-white/20">
+                    <h4 class="text-sm font-medium text-charcoal-900 mb-3">Portfolio Summary</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-charcoal-600">Total Value:</span>
+                            <span class="font-medium text-charcoal-900">$2,847,500</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-charcoal-600">Day P&L:</span>
+                            <span class="font-medium profit-positive">+$47,892</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-charcoal-600">Total P&L:</span>
+                            <span class="font-medium profit-positive">+$234,670</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-charcoal-600">Sharpe Ratio:</span>
+                            <span class="font-medium text-charcoal-900">1.87</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Analysis -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- ML Price Prediction -->
+            <div class="trading-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">ML Price Prediction</h3>
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-healthy"></div>
+                        <span class="text-xs text-green-600">Model Active</span>
+                    </div>
+                </div>
+                
+                <div id="predictionChart" class="h-64 mb-4"></div>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                        <span class="text-sm font-medium text-charcoal-900">Next Hour Prediction</span>
+                        <div class="text-right">
+                            <div class="text-sm text-blue-600">$0.128/kWh</div>
+                            <div class="text-xs text-charcoal-600">Confidence: 94%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                        <span class="text-sm font-medium text-charcoal-900">Recommended Action</span>
+                        <div class="text-right">
+                            <div class="text-sm text-green-600">Hold Long</div>
+                            <div class="text-xs text-charcoal-600">Probability: 78%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                        <span class="text-sm font-medium text-charcoal-900">Risk Assessment</span>
+                        <div class="text-right">
+                            <div class="text-sm text-orange-600">Medium</div>
+                            <div class="text-xs text-charcoal-600">Volatility: 12%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Services -->
+            <div class="trading-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Grid Services</h3>
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-healthy"></div>
+                        <span class="text-xs text-green-600">Services Active</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-white/30 rounded-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-charcoal-900">Frequency Regulation</span>
+                            <span class="text-sm text-green-600">Primary</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-xs text-charcoal-600 mb-3">
+                            <div>Capacity: 247 MW</div>
+                            <div>Rate: $35/MW/h</div>
+                            <div>Response Time: &lt;1s</div>
+                            <div>Revenue: $8,645/day</div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" style="width: 98%"></div>
+                        </div>
+                        <div class="text-xs text-charcoal-600 mt-1">Availability: 98%</div>
+                    </div>
+                    
+                    <div class="p-4 bg-white/30 rounded-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-charcoal-900">Spinning Reserve</span>
+                            <span class="text-sm text-blue-600">Secondary</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-xs text-charcoal-600 mb-3">
+                            <div>Capacity: 156 MW</div>
+                            <div>Rate: $28/MW/h</div>
+                            <div>Response Time: &lt;10s</div>
+                            <div>Revenue: $4,368/day</div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 95%"></div>
+                        </div>
+                        <div class="text-xs text-charcoal-600 mt-1">Availability: 95%</div>
+                    </div>
+                    
+                    <div class="p-4 bg-white/30 rounded-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-sm font-medium text-charcoal-900">Demand Response</span>
+                            <span class="text-sm text-purple-600">Tertiary</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-xs text-charcoal-600 mb-3">
+                            <div>Capacity: 89 MW</div>
+                            <div>Rate: $22/MW/h</div>
+                            <div>Response Time: &lt;1min</div>
+                            <div>Revenue: $1,958/day</div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-purple-600 h-2 rounded-full" style="width: 92%"></div>
+                        </div>
+                        <div class="text-xs text-charcoal-600 mt-1">Availability: 92%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Performance -->
+        <div class="trading-card rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-2xl font-semibold text-charcoal-900">Trading Performance</h3>
+                <div class="flex space-x-2">
+                    <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors" onclick="changePerformancePeriod('1d')">1D</button>
+                    <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg" onclick="changePerformancePeriod('7d')">7D</button>
+                    <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors" onclick="changePerformancePeriod('30d')">30D</button>
+                    <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors" onclick="changePerformancePeriod('1y')">1Y</button>
+                </div>
+            </div>
+            
+            <div id="performanceChart" class="h-80 mb-6"></div>
+            
+            <!-- Performance Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600 mb-2">+23.4%</div>
+                    <div class="text-sm text-charcoal-600">Total Return</div>
+                    <div class="text-xs text-charcoal-500">Last 30 days</div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600 mb-2">1.87</div>
+                    <div class="text-sm text-charcoal-600">Sharpe Ratio</div>
+                    <div class="text-xs text-charcoal-500">Risk-adjusted</div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600 mb-2">12.3%</div>
+                    <div class="text-sm text-charcoal-600">Max Drawdown</div>
+                    <div class="text-xs text-charcoal-500">Peak to trough</div>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-orange-600 mb-2">94.2%</div>
+                    <div class="text-sm text-charcoal-600">Win Rate</div>
+                    <div class="text-xs text-charcoal-500">Successful trades</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Vanta.js background
+        VANTA.BIRDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            backgroundColor: 0xf6f7f6,
+            color1: 0x7a907a,
+            color2: 0x5c7359,
+            colorMode: 'lerpGradient',
+            birdSize: 1.2,
+            wingSpan: 25.00,
+            speedLimit: 3.00,
+            separation: 20.00,
+            alignment: 20.00,
+            cohesion: 20.00,
+            quantity: 3.00
+        });
+
+        // Initialize Price Chart
+        function initializePriceChart() {
+            const priceData = [
+                {
+                    x: ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30'],
+                    y: [0.118, 0.119, 0.121, 0.123, 0.122, 0.124, 0.126, 0.125, 0.127, 0.124, 0.125, 0.1247],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Market Price',
+                    line: { color: '#3b82f6', width: 3 },
+                    marker: { color: '#3b82f6', size: 6 }
+                },
+                {
+                    x: ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30'],
+                    y: [0.117, 0.118, 0.120, 0.122, 0.121, 0.123, 0.125, 0.124, 0.126, 0.123, 0.124, 0.123],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'VWAP',
+                    line: { color: '#8b5cf6', width: 2, dash: 'dash' }
+                }
+            ];
+
+            const priceLayout = {
+                margin: { t: 20, r: 20, b: 40, l: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                xaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false
+                },
+                yaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false,
+                    title: 'Price ($/kWh)'
+                },
+                legend: {
+                    x: 0,
+                    y: 1,
+                    bgcolor: 'rgba(255,255,255,0.8)',
+                    bordercolor: 'rgba(0,0,0,0.1)',
+                    borderwidth: 1
+                }
+            };
+
+            Plotly.newPlot('priceChart', priceData, priceLayout, {displayModeBar: false, responsive: true});
+        }
+
+        // Initialize Prediction Chart
+        function initializePredictionChart() {
+            const predictionData = [
+                {
+                    x: ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'],
+                    y: [0.125, 0.126, 0.128, 0.129, 0.127, 0.124, 0.122, 0.120],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Predicted Price',
+                    line: { color: '#8b5cf6', width: 3 },
+                    marker: { color: '#8b5cf6', size: 8 }
+                },
+                {
+                    x: ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'],
+                    y: [0.124, 0.125, 0.127, 0.128, 0.126, 0.123, 0.121, 0.119],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Confidence Interval',
+                    line: { color: '#8b5cf6', width: 1, dash: 'dot' },
+                    fill: 'tonexty',
+                    fillcolor: 'rgba(139, 92, 246, 0.1)'
+                }
+            ];
+
+            const predictionLayout = {
+                margin: { t: 20, r: 20, b: 40, l: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                xaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false
+                },
+                yaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false,
+                    title: 'Price ($/kWh)'
+                },
+                legend: {
+                    x: 0,
+                    y: 1,
+                    bgcolor: 'rgba(255,255,255,0.8)',
+                    bordercolor: 'rgba(0,0,0,0.1)',
+                    borderwidth: 1
+                }
+            };
+
+            Plotly.newPlot('predictionChart', predictionData, predictionLayout, {displayModeBar: false, responsive: true});
+        }
+
+        // Initialize Performance Chart
+        function initializePerformanceChart() {
+            const performanceData = [
+                {
+                    x: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    y: [100, 102.3, 98.7, 105.2, 108.9, 112.1, 115.7],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Portfolio Value',
+                    line: { color: '#22c55e', width: 3 },
+                    marker: { color: '#22c55e', size: 8 },
+                    fill: 'tonexty',
+                    fillcolor: 'rgba(34, 197, 94, 0.1)'
+                },
+                {
+                    x: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    y: [100, 101.1, 99.8, 102.3, 104.1, 105.8, 107.2],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Benchmark',
+                    line: { color: '#6b7280', width: 2, dash: 'dash' }
+                }
+            ];
+
+            const performanceLayout = {
+                margin: { t: 20, r: 20, b: 40, l: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                xaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false
+                },
+                yaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false,
+                    title: 'Performance (%)'
+                },
+                legend: {
+                    x: 0,
+                    y: 1,
+                    bgcolor: 'rgba(255,255,255,0.8)',
+                    bordercolor: 'rgba(0,0,0,0.1)',
+                    borderwidth: 1
+                }
+            };
+
+            Plotly.newPlot('performanceChart', performanceData, performanceLayout, {displayModeBar: false, responsive: true});
+        }
+
+        // Trading Functions
+        function executeBuyOrder() {
+            const price = parseFloat(document.getElementById('marketPrice').textContent.replace('$', '').replace('/kWh', ''));
+            showNotification(`Executing buy order at market price: $${price}/kWh`, 'info');
+            
+            setTimeout(() => {
+                showNotification('Buy order executed successfully! +50 MWh', 'success');
+                updatePortfolio();
+            }, 1500);
+        }
+
+        function executeSellOrder() {
+            const price = parseFloat(document.getElementById('marketPrice').textContent.replace('$', '').replace('/kWh', ''));
+            showNotification(`Executing sell order at market price: $${price}/kWh`, 'info');
+            
+            setTimeout(() => {
+                showNotification('Sell order executed successfully! -30 MWh', 'success');
+                updatePortfolio();
+            }, 1500);
+        }
+
+        function enableAutoTrading() {
+            showNotification('Auto-trading algorithm activated! ML model taking control.', 'info');
+            
+            setTimeout(() => {
+                showNotification('Auto-trading enabled. System will optimize trades automatically.', 'success');
+            }, 1000);
+        }
+
+        function placeBuyOrder() {
+            const price = document.getElementById('orderPrice').value;
+            const volume = document.getElementById('orderVolume').value;
+            
+            if (!price || !volume) {
+                showNotification('Please enter both price and volume', 'error');
+                return;
+            }
+            
+            showNotification(`Placing buy order: ${volume} MWh at $${price}/kWh`, 'info');
+            
+            setTimeout(() => {
+                showNotification('Buy order placed in order book', 'success');
+                document.getElementById('orderPrice').value = '';
+                document.getElementById('orderVolume').value = '';
+            }, 1000);
+        }
+
+        function placeSellOrder() {
+            const price = document.getElementById('orderPrice').value;
+            const volume = document.getElementById('orderVolume').value;
+            
+            if (!price || !volume) {
+                showNotification('Please enter both price and volume', 'error');
+                return;
+            }
+            
+            showNotification(`Placing sell order: ${volume} MWh at $${price}/kWh`, 'info');
+            
+            setTimeout(() => {
+                showNotification('Sell order placed in order book', 'success');
+                document.getElementById('orderPrice').value = '';
+                document.getElementById('orderVolume').value = '';
+            }, 1000);
+        }
+
+        function closePosition(type) {
+            showNotification(`Closing ${type} position...`, 'info');
+            
+            setTimeout(() => {
+                showNotification(`${type} position closed successfully`, 'success');
+                updatePortfolio();
+            }, 1500);
+        }
+
+        function extendV2GService() {
+            showNotification('Extending V2G service for another 4 hours...', 'info');
+            
+            setTimeout(() => {
+                showNotification('V2G service extended successfully', 'success');
+            }, 1000);
+        }
+
+        // Utility Functions
+        function refreshOrderBook() {
+            showNotification('Refreshing order book...', 'info');
+            
+            setTimeout(() => {
+                showNotification('Order book updated', 'success');
+            }, 1000);
+        }
+
+        function changeTimeframe(timeframe) {
+            showNotification(`Changing chart timeframe to ${timeframe}...`, 'info');
+            
+            // Update button states
+            document.querySelectorAll('[onclick*="changeTimeframe"]').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-white/50', 'text-charcoal-600');
+            });
+            event.target.classList.remove('bg-white/50', 'text-charcoal-600');
+            event.target.classList.add('bg-blue-600', 'text-white');
+            
+            setTimeout(() => {
+                initializePriceChart();
+                showNotification(`Chart updated to ${timeframe} view`, 'success');
+            }, 1000);
+        }
+
+        function refreshPortfolio() {
+            showNotification('Refreshing portfolio data...', 'info');
+            
+            setTimeout(() => {
+                showNotification('Portfolio updated', 'success');
+            }, 1000);
+        }
+
+        function changePerformancePeriod(period) {
+            showNotification(`Changing performance period to ${period}...`, 'info');
+            
+            // Update button states
+            document.querySelectorAll('[onclick*="changePerformancePeriod"]').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-white/50', 'text-charcoal-600');
+            });
+            event.target.classList.remove('bg-white/50', 'text-charcoal-600');
+            event.target.classList.add('bg-blue-600', 'text-white');
+            
+            setTimeout(() => {
+                initializePerformanceChart();
+                showNotification(`Performance chart updated to ${period} view`, 'success');
+            }, 1000);
+        }
+
+        function updatePortfolio() {
+            // Simulate portfolio update
+            const positions = document.querySelectorAll('.position-card');
+            positions.forEach(position => {
+                // Add subtle animation to show update
+                position.style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    position.style.transform = 'scale(1)';
+                }, 200);
+            });
+        }
+
+        // Real-time Updates
+        function updateMarketData() {
+            // Update market price
+            const priceElement = document.getElementById('marketPrice');
+            const currentPrice = parseFloat(priceElement.textContent.replace('$', '').replace('/kWh', ''));
+            const variation = (Math.random() - 0.5) * 0.002;
+            const newPrice = Math.max(0.10, Math.min(0.15, currentPrice + variation));
+            priceElement.textContent = `$${newPrice.toFixed(4)}/kWh`;
+            
+            // Update last update time
+            const lastUpdate = document.getElementById('lastUpdate');
+            lastUpdate.textContent = 'Just now';
+            
+            // Update current bid price
+            const currentBidPrice = document.getElementById('currentBidPrice');
+            if (currentBidPrice) {
+                currentBidPrice.textContent = `$${newPrice.toFixed(4)}`;
+            }
+        }
+
+        // Notification System
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+            
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                info: 'bg-blue-500 text-white',
+                warning: 'bg-orange-500 text-white'
+            };
+            
+            notification.className += ` ${colors[type]}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePriceChart();
+            initializePredictionChart();
+            initializePerformanceChart();
+            
+            // Start real-time updates
+            setInterval(updateMarketData, 3000);
+            
+            // Simulate order book updates
+            setInterval(() => {
+                const orders = document.querySelectorAll('.order-row');
+                orders.forEach(order => {
+                    if (Math.random() > 0.8) { // 20% chance to update
+                        order.style.background = 'rgba(59, 130, 246, 0.1)';
+                        setTimeout(() => {
+                            order.style.background = '';
+                        }, 500);
+                    }
+                });
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

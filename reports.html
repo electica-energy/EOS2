@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Energy Action Models</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.birds.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sage-50: #f6f7f6;
+            --sage-100: #e3e7e3;
+            --sage-200: #c7d0c7;
+            --sage-300: #a3b3a3;
+            --sage-400: #7a907a;
+            --sage-500: #5c7359;
+            --sage-600: #495d47;
+            --sage-700: #3d4d3b;
+            --sage-800: #334032;
+            --sage-900: #2b352b;
+            
+            --charcoal-50: #f6f6f6;
+            --charcoal-100: #e7e7e7;
+            --charcoal-200: #d1d1d1;
+            --charcoal-300: #b0b0b0;
+            --charcoal-400: #888888;
+            --charcoal-500: #6d6d6d;
+            --charcoal-600: #5d5d5d;
+            --charcoal-700: #4f4f4f;
+            --charcoal-800: #454545;
+            --charcoal-900: #3d3d3d;
+            
+            --accent-green: #22c55e;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--sage-50) 0%, var(--charcoal-50) 100%);
+            min-height: 100vh;
+        }
+        
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 8px 16px;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--sage-700);
+            font-weight: 600;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--sage-700), var(--charcoal-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #vanta-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .report-card {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background-color: var(--accent-green); }
+        .status-warning { background-color: var(--accent-orange); }
+        .status-critical { background-color: var(--accent-red); }
+        
+        .report-item {
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .report-item:hover {
+            border-left-color: var(--accent-blue);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="relative z-10 glass-effect border-b border-white/20 mb-8">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-display text-xl font-bold gradient-text">Energy Action Models</h1>
+                        <p class="text-sm text-charcoal-600">Reports & Analytics</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-1">
+                    <a href="index.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Dashboard</a>
+                    <a href="analytics.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Analytics</a>
+                    <a href="configuration.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Configuration</a>
+                    <a href="reports.html" class="nav-link active">Reports</a>
+                    <a href="trading.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Energy Trading</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="font-display text-3xl font-bold text-charcoal-900 mb-2">Reports & Analytics</h2>
+            <p class="text-charcoal-600">Comprehensive reporting and data export capabilities</p>
+        </div>
+
+        <!-- Report Generation -->
+        <div class="report-card rounded-2xl p-6 mb-8 card-hover">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">Generate Report</h3>
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Report Type</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" id="reportType">
+                        <option value="comprehensive" selected>Comprehensive Report</option>
+                        <option value="health">Battery Health Report</option>
+                        <option value="performance">Performance Analysis</option>
+                        <option value="maintenance">Maintenance Report</option>
+                        <option value="financial">Financial Analysis</option>
+                        <option value="compliance">Compliance Report</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Time Period</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" id="timePeriod">
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d" selected>Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                        <option value="1y">Last Year</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Asset Filter</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" id="assetFilter">
+                        <option value="all" selected>All Assets</option>
+                        <option value="ev">Electric Vehicles</option>
+                        <option value="storage">Grid Storage</option>
+                        <option value="drone">Delivery Drones</option>
+                        <option value="private">Private EVs</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Format</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" id="reportFormat">
+                        <option value="pdf" selected>PDF</option>
+                        <option value="excel">Excel</option>
+                        <option value="csv">CSV</option>
+                        <option value="json">JSON</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4">
+                <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" onclick="generateReport()">
+                    Generate Report
+                </button>
+                <button class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" onclick="scheduleReport()">
+                    Schedule Report
+                </button>
+                <button class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors" onclick="previewReport()">
+                    Preview Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Generated Reports -->
+            <div class="report-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Recent Reports</h3>
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="report-item p-4 rounded-lg cursor-pointer" onclick="downloadReport('comprehensive_2024_11_10')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-charcoal-900">Comprehensive Battery Analysis</h4>
+                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Completed</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-charcoal-600">
+                            <span>Generated: Nov 10, 2024 • 2:30 PM</span>
+                            <span>PDF • 2.4 MB</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <div class="status-indicator status-healthy"></div>
+                            <span class="text-xs text-charcoal-600">247 assets analyzed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="report-item p-4 rounded-lg cursor-pointer" onclick="downloadReport('health_2024_11_09')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-charcoal-900">Battery Health Assessment</h4>
+                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Completed</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-charcoal-600">
+                            <span>Generated: Nov 9, 2024 • 9:15 AM</span>
+                            <span>Excel • 1.8 MB</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <div class="status-indicator status-healthy"></div>
+                            <span class="text-xs text-charcoal-600">Health scores updated</span>
+                        </div>
+                    </div>
+                    
+                    <div class="report-item p-4 rounded-lg cursor-pointer" onclick="downloadReport('maintenance_2024_11_08')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-charcoal-900">Maintenance Schedule</h4>
+                            <span class="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">In Progress</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-charcoal-600">
+                            <span>Started: Nov 8, 2024 • 3:45 PM</span>
+                            <span>PDF • 1.2 MB</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <div class="status-indicator status-warning"></div>
+                            <span class="text-xs text-charcoal-600">67% complete</span>
+                        </div>
+                        <div class="progress-bar mt-2">
+                            <div class="progress-fill" style="width: 67%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-item p-4 rounded-lg cursor-pointer" onclick="downloadReport('performance_2024_11_07')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-charcoal-900">Performance Optimization</h4>
+                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">Completed</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-charcoal-600">
+                            <span>Generated: Nov 7, 2024 • 11:20 AM</span>
+                            <span>CSV • 3.1 MB</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <div class="status-indicator status-healthy"></div>
+                            <span class="text-xs text-charcoal-600">Optimization recommendations</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <button class="text-blue-600 text-sm hover:text-blue-700 transition-colors" onclick="viewAllReports()">
+                        View All Reports →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scheduled Reports -->
+            <div class="report-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Scheduled Reports</h3>
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-white/30 rounded-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-medium text-charcoal-900">Weekly Health Report</h4>
+                            <div class="flex items-center space-x-2">
+                                <div class="status-indicator status-healthy"></div>
+                                <span class="text-xs text-green-600">Active</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-charcoal-600 mb-3">
+                            <p>Every Monday at 8:00 AM • All Assets • PDF Format</p>
+                            <p>Next Report: Nov 11, 2024</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" onclick="editSchedule('weekly_health')">
+                                Edit
+                            </button>
+                            <button class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors" onclick="disableSchedule('weekly_health')">
+                                Disable
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white/30 rounded-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-medium text-charcoal-900">Monthly Performance Analysis</h4>
+                            <div class="flex items-center space-x-2">
+                                <div class="status-indicator status-healthy"></div>
+                                <span class="text-xs text-green-600">Active</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-charcoal-600 mb-3">
+                            <p>1st of every month at 9:00 AM • EV Fleet • Excel Format</p>
+                            <p>Next Report: Dec 1, 2024</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" onclick="editSchedule('monthly_performance')">
+                                Edit
+                            </button>
+                            <button class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors" onclick="disableSchedule('monthly_performance')">
+                                Disable
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white/30 rounded-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-sm font-medium text-charcoal-900">Daily Anomaly Summary</h4>
+                            <div class="flex items-center space-x-2">
+                                <div class="status-indicator status-warning"></div>
+                                <span class="text-xs text-orange-600">Paused</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-charcoal-600 mb-3">
+                            <p>Daily at 6:00 PM • All Assets • JSON Format</p>
+                            <p>Last Report: Nov 5, 2024</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors" onclick="enableSchedule('daily_anomaly')">
+                                Enable
+                            </button>
+                            <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" onclick="editSchedule('daily_anomaly')">
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <button class="w-full px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors" onclick="createSchedule()">
+                        Create New Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Export -->
+        <div class="report-card rounded-2xl p-6 mb-8 card-hover">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">Data Export</h3>
+                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Data Type</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" id="dataType">
+                        <option value="raw" selected>Raw Sensor Data</option>
+                        <option value="processed">Processed Analytics</option>
+                        <option value="predictions">Predictions & Models</option>
+                        <option value="alerts">Alert History</option>
+                        <option value="maintenance">Maintenance Records</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Date Range</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" id="exportDateRange">
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d" selected>Last 30 Days</option>
+                        <option value="90d">Last 90 Days</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Export Format</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" id="exportFormat">
+                        <option value="csv" selected>CSV</option>
+                        <option value="json">JSON</option>
+                        <option value="parquet">Parquet</option>
+                        <option value="xlsx">Excel</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4">
+                <button class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" onclick="exportData()">
+                    Export Data
+                </button>
+                <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" onclick="scheduleExport()">
+                    Schedule Export
+                </button>
+                <button class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors" onclick="customExport()">
+                    Custom Export
+                </button>
+            </div>
+        </div>
+
+        <!-- Report Templates -->
+        <div class="report-card rounded-2xl p-6 card-hover">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">Report Templates</h3>
+                <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="p-4 bg-white/30 rounded-lg cursor-pointer hover:bg-white/50 transition-colors" onclick="useTemplate('executive')">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-charcoal-900">Executive Summary</h4>
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <p class="text-xs text-charcoal-600">High-level overview for management</p>
+                    <div class="mt-2 text-xs text-blue-600">PDF • 2-3 pages</div>
+                </div>
+                
+                <div class="p-4 bg-white/30 rounded-lg cursor-pointer hover:bg-white/50 transition-colors" onclick="useTemplate('technical')">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-charcoal-900">Technical Analysis</h4>
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <p class="text-xs text-charcoal-600">Detailed technical metrics and analysis</p>
+                    <div class="mt-2 text-xs text-green-600">Excel • 15-20 pages</div>
+                </div>
+                
+                <div class="p-4 bg-white/30 rounded-lg cursor-pointer hover:bg-white/50 transition-colors" onclick="useTemplate('maintenance')">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-charcoal-900">Maintenance Report</h4>
+                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        </svg>
+                    </div>
+                    <p class="text-xs text-charcoal-600">Maintenance schedules and recommendations</p>
+                    <div class="mt-2 text-xs text-orange-600">PDF • 8-12 pages</div>
+                </div>
+                
+                <div class="p-4 bg-white/30 rounded-lg cursor-pointer hover:bg-white/50 transition-colors" onclick="useTemplate('compliance')">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-charcoal-900">Compliance Report</h4>
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-xs text-charcoal-600">Regulatory compliance and safety</p>
+                    <div class="mt-2 text-xs text-purple-600">PDF • 5-8 pages</div>
+                </div>
+                
+                <div class="p-4 bg-white/30 rounded-lg cursor-pointer hover:bg-white/50 transition-colors" onclick="useTemplate('financial')">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-charcoal-900">Financial Analysis</h4>
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                    </div>
+                    <p class="text-xs text-charcoal-600">ROI and cost optimization analysis</p>
+                    <div class="mt-2 text-xs text-indigo-600">Excel • 10-15 pages</div>
+                </div>
+                
+                <div class="p-4 bg-white/30 rounded-lg cursor-pointer hover:bg-white/50 transition-colors" onclick="useTemplate('custom')">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-medium text-charcoal-900">Custom Report</h4>
+                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
+                        </svg>
+                    </div>
+                    <p class="text-xs text-charcoal-600">Build your own custom report</p>
+                    <div class="mt-2 text-xs text-gray-600">Multiple • Custom</div>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <button class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" onclick="createCustomTemplate()">
+                    Create Custom Template
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Vanta.js background
+        VANTA.BIRDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            backgroundColor: 0xf6f7f6,
+            color1: 0x7a907a,
+            color2: 0x5c7359,
+            colorMode: 'lerpGradient',
+            birdSize: 1.2,
+            wingSpan: 25.00,
+            speedLimit: 3.00,
+            separation: 20.00,
+            alignment: 20.00,
+            cohesion: 20.00,
+            quantity: 3.00
+        });
+
+        // Report generation functions
+        function generateReport() {
+            const reportType = document.getElementById('reportType').value;
+            const timePeriod = document.getElementById('timePeriod').value;
+            const assetFilter = document.getElementById('assetFilter').value;
+            const reportFormat = document.getElementById('reportFormat').value;
+            
+            showNotification(`Generating ${reportType} report for ${assetFilter} over ${timePeriod}...`, 'info');
+            
+            // Simulate report generation
+            setTimeout(() => {
+                showNotification('Report generated successfully!', 'success');
+                // Simulate download
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = 'data:text/plain;charset=utf-8,Report Generated Successfully';
+                    link.download = `${reportType}_report.${reportFormat}`;
+                    link.click();
+                }, 500);
+            }, 2000);
+        }
+
+        function scheduleReport() {
+            showNotification('Opening report scheduling dialog...', 'info');
+            setTimeout(() => {
+                showNotification('Report scheduled successfully!', 'success');
+            }, 1500);
+        }
+
+        function previewReport() {
+            showNotification('Generating report preview...', 'info');
+            setTimeout(() => {
+                showNotification('Preview ready for download!', 'success');
+                // Simulate preview download
+                const link = document.createElement('a');
+                link.href = 'data:text/plain;charset=utf-8,Report Preview Content';
+                link.download = 'report_preview.pdf';
+                link.click();
+            }, 1500);
+        }
+
+        function downloadReport(reportId) {
+            showNotification(`Downloading ${reportId}...`, 'info');
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = 'data:text/plain;charset=utf-8,Report Content';
+                link.download = `${reportId}.pdf`;
+                link.click();
+                showNotification('Report downloaded successfully!', 'success');
+            }, 1000);
+        }
+
+        function viewAllReports() {
+            showNotification('Loading all reports...', 'info');
+        }
+
+        function editSchedule(scheduleId) {
+            showNotification(`Editing schedule: ${scheduleId}...`, 'info');
+        }
+
+        function disableSchedule(scheduleId) {
+            showNotification(`Disabling schedule: ${scheduleId}...`, 'warning');
+            setTimeout(() => {
+                showNotification('Schedule disabled successfully!', 'success');
+            }, 1000);
+        }
+
+        function enableSchedule(scheduleId) {
+            showNotification(`Enabling schedule: ${scheduleId}...`, 'info');
+            setTimeout(() => {
+                showNotification('Schedule enabled successfully!', 'success');
+            }, 1000);
+        }
+
+        function createSchedule() {
+            showNotification('Opening schedule creation dialog...', 'info');
+        }
+
+        function exportData() {
+            const dataType = document.getElementById('dataType').value;
+            const dateRange = document.getElementById('exportDateRange').value;
+            const exportFormat = document.getElementById('exportFormat').value;
+            
+            showNotification(`Exporting ${dataType} data in ${exportFormat} format...`, 'info');
+            
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = 'data:text/plain;charset=utf-8,Exported Data Content';
+                link.download = `${dataType}_export.${exportFormat}`;
+                link.click();
+                showNotification('Data exported successfully!', 'success');
+            }, 2000);
+        }
+
+        function scheduleExport() {
+            showNotification('Opening export scheduling dialog...', 'info');
+        }
+
+        function customExport() {
+            showNotification('Opening custom export wizard...', 'info');
+        }
+
+        function useTemplate(templateType) {
+            showNotification(`Using ${templateType} template...`, 'info');
+            setTimeout(() => {
+                showNotification('Template applied successfully!', 'success');
+            }, 1000);
+        }
+
+        function createCustomTemplate() {
+            showNotification('Opening custom template builder...', 'info');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+            
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                info: 'bg-blue-500 text-white',
+                warning: 'bg-orange-500 text-white'
+            };
+            
+            notification.className += ` ${colors[type]}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Add hover effects to report cards
+        document.querySelectorAll('.report-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.15)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '';
+            });
+        });
+    </script>
+</body>
+</html>

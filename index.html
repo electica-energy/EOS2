@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electica Energy - AI Battery Intelligence & Energy Trading Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.birds.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+    <style>
+        :root {
+            --sage-50: #f6f7f6;
+            --sage-100: #e3e7e3;
+            --sage-200: #c7d0c7;
+            --sage-300: #a3b3a3;
+            --sage-400: #7a907a;
+            --sage-500: #5c7359;
+            --sage-600: #495d47;
+            --sage-700: #3d4d3b;
+            --sage-800: #334032;
+            --sage-900: #2b352b;
+            
+            --charcoal-50: #f6f6f6;
+            --charcoal-100: #e7e7e7;
+            --charcoal-200: #d1d1d1;
+            --charcoal-300: #b0b0b0;
+            --charcoal-400: #888888;
+            --charcoal-500: #6d6d6d;
+            --charcoal-600: #5d5d5d;
+            --charcoal-700: #4f4f4f;
+            --charcoal-800: #454545;
+            --charcoal-900: #3d3d3d;
+            
+            --accent-green: #22c55e;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-indigo: #6366f1;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--sage-50) 0%, var(--charcoal-50) 100%);
+            min-height: 100vh;
+            cursor: none;
+        }
+        
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 8px 16px;
+            color: var(--charcoal-600);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            color: var(--charcoal-900);
+        }
+        
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--sage-700);
+            font-weight: 600;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--sage-700), var(--charcoal-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #vanta-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .cursor-follower {
+            width: 40px;
+            height: 40px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .energy-card {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background-color: var(--accent-green); }
+        .status-warning { background-color: var(--accent-orange); }
+        .status-critical { background-color: var(--accent-red); }
+        
+        .energy-tab {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .energy-tab.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-bottom: 3px solid var(--accent-blue);
+        }
+        
+        .price-indicator {
+            font-family: 'Montserrat', monospace;
+            font-weight: 600;
+        }
+        
+        .revenue-counter {
+            font-family: 'Montserrat', monospace;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .leaflet-container {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .charging-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .energy-flow {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .energy-flow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.3), transparent);
+            animation: flow 3s infinite;
+        }
+        
+        @keyframes flow {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    
+    <!-- Vanta.js Background -->
+    <div id="vanta-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="relative z-10 glass-effect border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <!-- Electica Logo -->
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-display text-2xl font-bold gradient-text">Electica Energy</h1>
+                        <p class="text-sm text-charcoal-600">AI Battery Intelligence & Energy Trading Platform</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-1">
+                    <a href="index.html" class="nav-link active">Dashboard</a>
+                    <a href="analytics.html" class="nav-link">Analytics</a>
+                    <a href="configuration.html" class="nav-link">Configuration</a>
+                    <a href="reports.html" class="nav-link">Reports</a>
+                    <a href="trading.html" class="nav-link">Energy Trading</a>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-healthy animate-pulse"></div>
+                        <span class="text-sm text-charcoal-600 font-medium">System Active</span>
+                    </div>
+                    <div class="text-sm text-charcoal-600">
+                        <span class="font-medium">Fleet:</span> 1,247 Assets
+                    </div>
+                    <div class="text-sm text-charcoal-600">
+                        <span class="font-medium">Revenue:</span> <span class="revenue-counter text-green-600">$2.4M</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        <!-- Hero Section -->
+        <div class="mb-8 text-center">
+            <h2 class="font-display text-4xl font-bold text-charcoal-900 mb-4">ElecticaOS Intelligence Layer</h2>
+            <p class="text-xl text-charcoal-600 mb-6">Tesla Autobidder Equivalent + AI Battery Intelligence</p>
+            <div class="flex justify-center space-x-8 text-sm text-charcoal-600">
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Patented Adaptive Charging</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span>V2G & B2G Enablement</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span>Battery Intelligence SaaS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Energy Trading Overview -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Current Energy Price -->
+            <div class="energy-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-charcoal-900">Current Energy Price</h3>
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="price-indicator text-3xl font-bold text-blue-600 mb-2" id="currentPrice">$0.12/kWh</div>
+                <div class="text-sm text-charcoal-600 mb-4">
+                    <span class="text-green-600">↓ 15%</span> from peak ($0.14/kWh)
+                </div>
+                <div class="text-xs text-charcoal-600">
+                    Next Price Update: <span id="nextUpdate">2 min</span>
+                </div>
+            </div>
+
+            <!-- Daily Revenue -->
+            <div class="energy-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-charcoal-900">Today's Revenue</h3>
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="revenue-counter text-3xl font-bold text-green-600 mb-2" id="dailyRevenue">$47,892</div>
+                <div class="text-sm text-charcoal-600 mb-4">
+                    <span class="text-green-600">↑ 23%</span> from yesterday
+                </div>
+                <div class="text-xs text-charcoal-600">
+                    V2G: $28,450 | Grid Services: $19,442
+                </div>
+            </div>
+
+            <!-- Grid Services Status -->
+            <div class="energy-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-charcoal-900">Grid Services</h3>
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-purple-600 mb-2">847 MW</div>
+                <div class="text-sm text-charcoal-600 mb-4">
+                    <span class="text-green-600">Active</span> - Ready for deployment
+                </div>
+                <div class="text-xs text-charcoal-600">
+                    Response Time: <span class="font-medium">&lt;100ms</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Energy Orchestration Tabs -->
+        <div class="energy-card rounded-2xl p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-2xl font-bold text-charcoal-900">Energy Orchestration</h3>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full charging-animation"></div>
+                    <span class="text-sm text-charcoal-600 font-medium">Live Trading Active</span>
+                </div>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="flex space-x-1 mb-6 bg-white/20 rounded-lg p-1">
+                <button class="energy-tab active flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors" onclick="switchTab('home', this)">
+                    Home Assets
+                </button>
+                <button class="energy-tab flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors" onclick="switchTab('commercial', this)">
+                    Commercial
+                </button>
+                <button class="energy-tab flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors" onclick="switchTab('industrial', this)">
+                    Industrial
+                </button>
+                <button class="energy-tab flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors" onclick="switchTab('trading', this)">
+                    Energy Trading
+                </button>
+            </div>
+            
+            <!-- Tab Content -->
+            <div id="tabContent">
+                <!-- Home Assets Tab -->
+                <div id="home" class="tab-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-semibold text-charcoal-900 mb-4">Home Energy Assets</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">Tesla Model Y</p>
+                                            <p class="text-sm text-charcoal-600">Home Charger • 75 kWh</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-green-600">Charging</p>
+                                        <p class="text-xs text-charcoal-600">$0.08/kWh</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">Powerwall 2</p>
+                                            <p class="text-sm text-charcoal-600">Battery Storage • 13.5 kWh</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-purple-600">Idle</p>
+                                        <p class="text-xs text-charcoal-600">Ready for V2G</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">Solar Roof</p>
+                                            <p class="text-sm text-charcoal-600">Solar Generation • 8.5 kW</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-orange-600">Generating</p>
+                                        <p class="text-xs text-charcoal-600">$0.03/kWh</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-lg font-semibold text-charcoal-900 mb-4">Energy Flow</h4>
+                            <div class="h-64 bg-white/20 rounded-lg p-4">
+                                <div id="energyFlowChart" class="h-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Commercial Tab -->
+                <div id="commercial" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-semibold text-charcoal-900 mb-4">Commercial Energy Assets</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">Office Building BESS</p>
+                                            <p class="text-sm text-charcoal-600">500 kWh Storage</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-green-600">Discharging</p>
+                                        <p class="text-xs text-charcoal-600">$0.18/kWh</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">EV Fleet Charging</p>
+                                            <p class="text-sm text-charcoal-600">25 Vehicles • 1.2 MW</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-blue-600">Smart Charging</p>
+                                        <p class="text-xs text-charcoal-600">$0.09/kWh</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">Solar Array</p>
+                                            <p class="text-sm text-charcoal-600">250 kW Generation</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-orange-600">Peak Generation</p>
+                                        <p class="text-xs text-charcoal-600">$0.02/kWh</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-lg font-semibold text-charcoal-900 mb-4">Commercial Energy Management</h4>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-charcoal-900">Peak Shaving</span>
+                                        <span class="text-sm text-green-600">Active</span>
+                                    </div>
+                                    <div class="text-xs text-charcoal-600 mb-2">Reducing peak demand by 35%</div>
+                                    <div class="text-xs text-charcoal-600">Savings: $2,340/day</div>
+                                </div>
+                                
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-charcoal-900">Demand Response</span>
+                                        <span class="text-sm text-blue-600">Participating</span>
+                                    </div>
+                                    <div class="text-xs text-charcoal-600 mb-2">Grid balancing services</div>
+                                    <div class="text-xs text-charcoal-600">Revenue: $1,890/day</div>
+                                </div>
+                                
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-charcoal-900">Energy Arbitrage</span>
+                                        <span class="text-sm text-purple-600">Trading</span>
+                                    </div>
+                                    <div class="text-xs text-charcoal-600 mb-2">Buy low, sell high strategy</div>
+                                    <div class="text-xs text-charcoal-600">Profit: $3,670/day</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Industrial Tab -->
+                <div id="industrial" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-semibold text-charcoal-900 mb-4">Industrial Energy Assets</h4>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">Factory BESS</p>
+                                            <p class="text-sm text-charcoal-600">5 MWh Storage</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-purple-600">Grid Services</p>
+                                        <p class="text-xs text-charcoal-600">$0.25/kWh</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">Industrial Solar</p>
+                                            <p class="text-sm text-charcoal-600">2 MW Generation</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-orange-600">Generating</p>
+                                        <p class="text-xs text-charcoal-600">$0.04/kWh</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-charcoal-900">Load Balancing</p>
+                                            <p class="text-sm text-charcoal-600">Smart Grid Integration</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-blue-600">Active</p>
+                                        <p class="text-xs text-charcoal-600">$0.15/kWh</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-lg font-semibold text-charcoal-900 mb-4">Industrial Operations</h4>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-charcoal-900">Frequency Regulation</span>
+                                        <span class="text-sm text-green-600">Primary</span>
+                                    </div>
+                                    <div class="text-xs text-charcoal-600 mb-2">Grid stability services</div>
+                                    <div class="text-xs text-charcoal-600">Revenue: $15,670/day</div>
+                                </div>
+                                
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-charcoal-900">Voltage Support</span>
+                                        <span class="text-sm text-blue-600">Secondary</span>
+                                    </div>
+                                    <div class="text-xs text-charcoal-600 mb-2">Reactive power support</div>
+                                    <div class="text-xs text-charcoal-600">Revenue: $8,920/day</div>
+                                </div>
+                                
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-charcoal-900">Black Start</span>
+                                        <span class="text-sm text-purple-600">Standby</span>
+                                    </div>
+                                    <div class="text-xs text-charcoal-600 mb-2">Emergency grid restoration</div>
+                                    <div class="text-xs text-charcoal-600">Capacity: $5,430/day</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Energy Trading Tab -->
+                <div id="trading" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-lg font-semibold text-charcoal-900 mb-4">Energy Trading Dashboard</h4>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-sm font-medium text-charcoal-900">Day-Ahead Market</span>
+                                        <span class="text-sm text-green-600">Bidding</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 text-xs text-charcoal-600">
+                                        <div>
+                                            <div>Bid Price: $0.11/kWh</div>
+                                            <div>Volume: 2,450 MWh</div>
+                                        </div>
+                                        <div>
+                                            <div>Expected Revenue: $269,500</div>
+                                            <div>Confidence: 87%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-sm font-medium text-charcoal-900">Real-Time Market</span>
+                                        <span class="text-sm text-blue-600">Trading</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 text-xs text-charcoal-600">
+                                        <div>
+                                            <div>Current Price: $0.12/kWh</div>
+                                            <div>Position: Long 150 MW</div>
+                                        </div>
+                                        <div>
+                                            <div>P&L Today: +$18,450</div>
+                                            <div>Volatility: 12%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 bg-white/30 rounded-lg">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span class="text-sm font-medium text-charcoal-900">Ancillary Services</span>
+                                        <span class="text-sm text-purple-600">Active</span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 text-xs text-charcoal-600">
+                                        <div>
+                                            <div>Frequency Reg: $35/MW/h</div>
+                                            <div>Spinning Res: $45/MW/h</div>
+                                        </div>
+                                        <div>
+                                            <div>Daily Revenue: $12,340</div>
+                                            <div>Availability: 98.5%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="text-lg font-semibold text-charcoal-900 mb-4">Price Prediction & ML Insights</h4>
+                            <div class="h-64 bg-white/20 rounded-lg p-4 mb-4">
+                                <div id="pricePredictionChart" class="h-full"></div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                                    <span class="text-sm font-medium text-charcoal-900">Next 4 Hours Prediction</span>
+                                    <div class="text-right">
+                                        <div class="text-sm text-blue-600">Price: $0.15/kWh</div>
+                                        <div class="text-xs text-charcoal-600">Confidence: 92%</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                                    <span class="text-sm font-medium text-charcoal-900">Recommended Action</span>
+                                    <div class="text-right">
+                                        <div class="text-sm text-green-600">Sell Energy</div>
+                                        <div class="text-xs text-charcoal-600">Volume: 500 MWh</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                                    <span class="text-sm font-medium text-charcoal-900">Expected Revenue</span>
+                                    <div class="text-right">
+                                        <div class="text-sm text-purple-600">$75,000</div>
+                                        <div class="text-xs text-charcoal-600">Next 4 hours</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Map -->
+        <div class="energy-card rounded-2xl p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-2xl font-bold text-charcoal-900">Energy Asset Map</h3>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span class="text-sm text-charcoal-600">Home Assets</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span class="text-sm text-charcoal-600">Commercial</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                        <span class="text-sm text-charcoal-600">Industrial</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="assetMap" class="h-96 rounded-lg overflow-hidden"></div>
+        </div>
+
+        <!-- Real-time Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="energy-card rounded-2xl p-6 text-center">
+                <div class="text-2xl font-bold text-blue-600 mb-2" id="totalCapacity">1,247 MWh</div>
+                <div class="text-sm text-charcoal-600">Total Capacity</div>
+            </div>
+            
+            <div class="energy-card rounded-2xl p-6 text-center">
+                <div class="text-2xl font-bold text-green-600 mb-2" id="activeTrades">156</div>
+                <div class="text-sm text-charcoal-600">Active Trades</div>
+            </div>
+            
+            <div class="energy-card rounded-2xl p-6 text-center">
+                <div class="text-2xl font-bold text-purple-600 mb-2" id="gridServices">23</div>
+                <div class="text-sm text-charcoal-600">Grid Services</div>
+            </div>
+            
+            <div class="energy-card rounded-2xl p-6 text-center">
+                <div class="text-2xl font-bold text-orange-600 mb-2" id="efficiency">96.8%</div>
+                <div class="text-sm text-charcoal-600">System Efficiency</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Vanta.js background
+        VANTA.BIRDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            backgroundColor: 0xf6f7f6,
+            color1: 0x7a907a,
+            color2: 0x5c7359,
+            colorMode: 'lerpGradient',
+            birdSize: 1.2,
+            wingSpan: 25.00,
+            speedLimit: 3.00,
+            separation: 20.00,
+            alignment: 20.00,
+            cohesion: 20.00,
+            quantity: 3.00
+        });
+
+        // Custom Cursor Animation
+        const cursor = document.querySelector('.cursor');
+        const cursorFollower = document.querySelector('.cursor-follower');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            setTimeout(() => {
+                cursorFollower.style.left = e.clientX + 'px';
+                cursorFollower.style.top = e.clientY + 'px';
+            }, 100);
+        });
+
+        // Tab Switching Function
+        function switchTab(tabName, element) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.energy-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.remove('hidden');
+            element.classList.add('active');
+            
+            // Update charts if needed
+            if (tabName === 'trading') {
+                initializePricePredictionChart();
+            } else {
+                initializeEnergyFlowChart();
+            }
+        }
+
+        // Initialize Energy Flow Chart
+        function initializeEnergyFlowChart() {
+            const flowData = [
+                {
+                    x: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    y: [2.5, 1.8, 4.2, 7.8, 6.4, 3.2, 2.1],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Energy Consumption',
+                    line: { color: '#ef4444', width: 3 },
+                    marker: { color: '#ef4444', size: 8 }
+                },
+                {
+                    x: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    y: [0.5, 0.3, 2.1, 8.5, 7.2, 1.8, 0.4],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Solar Generation',
+                    line: { color: '#f59e0b', width: 3 },
+                    marker: { color: '#f59e0b', size: 8 }
+                },
+                {
+                    x: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    y: [-1.2, -0.8, 1.8, -0.5, -1.8, -0.9, -0.2],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Grid Exchange',
+                    line: { color: '#3b82f6', width: 3 },
+                    marker: { color: '#3b82f6', size: 8 }
+                }
+            ];
+
+            const flowLayout = {
+                margin: { t: 20, r: 20, b: 40, l: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                xaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false
+                },
+                yaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: true,
+                    title: 'Energy (kWh)'
+                },
+                legend: {
+                    x: 0,
+                    y: 1,
+                    bgcolor: 'rgba(255,255,255,0.8)',
+                    bordercolor: 'rgba(0,0,0,0.1)',
+                    borderwidth: 1
+                }
+            };
+
+            Plotly.newPlot('energyFlowChart', flowData, flowLayout, {displayModeBar: false, responsive: true});
+        }
+
+        // Initialize Price Prediction Chart
+        function initializePricePredictionChart() {
+            const priceData = [
+                {
+                    x: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00', '24:00'],
+                    y: [0.08, 0.07, 0.06, 0.09, 0.12, 0.15, 0.18, 0.16, 0.14, 0.13, 0.11, 0.09, 0.08],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Predicted Price',
+                    line: { color: '#8b5cf6', width: 3 },
+                    marker: { color: '#8b5cf6', size: 8 }
+                },
+                {
+                    x: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00', '24:00'],
+                    y: [0.082, 0.072, 0.058, 0.088, 0.118, 0.148, 0.175, 0.158, 0.138, 0.128, 0.108, 0.088, 0.082],
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Actual Price',
+                    line: { color: '#22c55e', width: 2, dash: 'dash' }
+                }
+            ];
+
+            const priceLayout = {
+                margin: { t: 20, r: 20, b: 40, l: 60 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                xaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false
+                },
+                yaxis: { 
+                    gridcolor: 'rgba(0,0,0,0.1)',
+                    showgrid: true,
+                    zeroline: false,
+                    title: 'Price ($/kWh)'
+                },
+                legend: {
+                    x: 0,
+                    y: 1,
+                    bgcolor: 'rgba(255,255,255,0.8)',
+                    bordercolor: 'rgba(0,0,0,0.1)',
+                    borderwidth: 1
+                }
+            };
+
+            Plotly.newPlot('pricePredictionChart', priceData, priceLayout, {displayModeBar: false, responsive: true});
+        }
+
+        // Initialize Map
+        function initializeMap() {
+            const map = L.map('assetMap').setView([20.5937, 78.9629], 5); // India center
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add markers for different asset types
+            const homeAssets = [
+                { lat: 28.7041, lng: 77.1025, name: 'Delhi Home Cluster', type: 'home', capacity: '45 MW' },
+                { lat: 19.0760, lng: 72.8777, name: 'Mumbai Residential', type: 'home', capacity: '38 MW' },
+                { lat: 12.9716, lng: 77.5946, name: 'Bangalore Homes', type: 'home', capacity: '52 MW' }
+            ];
+
+            const commercialAssets = [
+                { lat: 28.7041, lng: 77.1025, name: 'Delhi Office Complex', type: 'commercial', capacity: '120 MW' },
+                { lat: 19.0760, lng: 72.8777, name: 'Mumbai Business District', type: 'commercial', capacity: '95 MW' },
+                { lat: 13.0827, lng: 80.2707, name: 'Chennai IT Park', type: 'commercial', capacity: '78 MW' }
+            ];
+
+            const industrialAssets = [
+                { lat: 22.3193, lng: 73.1809, name: 'Gujarat Industrial Zone', type: 'industrial', capacity: '250 MW' },
+                { lat: 26.9124, lng: 75.7873, name: 'Rajasthan Manufacturing', type: 'industrial', capacity: '180 MW' },
+                { lat: 17.4065, lng: 78.4772, name: 'Hyderabad Factory', type: 'industrial', capacity: '165 MW' }
+            ];
+
+            // Add markers
+            [...homeAssets, ...commercialAssets, ...industrialAssets].forEach(asset => {
+                const color = asset.type === 'home' ? 'blue' : asset.type === 'commercial' ? 'green' : 'purple';
+                const marker = L.circleMarker([asset.lat, asset.lng], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.7,
+                    radius: 8
+                }).addTo(map);
+                
+                marker.bindPopup(`<b>${asset.name}</b><br>Type: ${asset.type}<br>Capacity: ${asset.capacity}`);
+            });
+        }
+
+        // Real-time Data Updates
+        function updateRealTimeData() {
+            // Update energy price
+            const currentPrice = document.getElementById('currentPrice');
+            const basePrice = 0.12;
+            const variation = (Math.random() - 0.5) * 0.02;
+            const newPrice = Math.max(0.08, Math.min(0.18, basePrice + variation));
+            currentPrice.textContent = `$${newPrice.toFixed(3)}/kWh`;
+            
+            // Update revenue
+            const dailyRevenue = document.getElementById('dailyRevenue');
+            const baseRevenue = 47892;
+            const revenueVariation = (Math.random() - 0.5) * 2000;
+            const newRevenue = Math.max(40000, baseRevenue + revenueVariation);
+            dailyRevenue.textContent = `$${newRevenue.toLocaleString()}`;
+            
+            // Update next update countdown
+            const nextUpdate = document.getElementById('nextUpdate');
+            let countdown = parseInt(nextUpdate.textContent) || 2;
+            countdown--;
+            if (countdown <= 0) {
+                countdown = 2;
+            }
+            nextUpdate.textContent = `${countdown} min`;
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEnergyFlowChart();
+            initializeMap();
+            
+            // Start real-time updates
+            setInterval(updateRealTimeData, 5000);
+            
+            // Initialize with home tab
+            switchTab('home', document.querySelector('.energy-tab.active'));
+        });
+
+        // Notification System
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+            
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                info: 'bg-blue-500 text-white',
+                warning: 'bg-orange-500 text-white'
+            };
+            
+            notification.className += ` ${colors[type]}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

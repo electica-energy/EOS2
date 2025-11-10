@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration - Energy Action Models</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.birds.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sage-50: #f6f7f6;
+            --sage-100: #e3e7e3;
+            --sage-200: #c7d0c7;
+            --sage-300: #a3b3a3;
+            --sage-400: #7a907a;
+            --sage-500: #5c7359;
+            --sage-600: #495d47;
+            --sage-700: #3d4d3b;
+            --sage-800: #334032;
+            --sage-900: #2b352b;
+            
+            --charcoal-50: #f6f6f6;
+            --charcoal-100: #e7e7e7;
+            --charcoal-200: #d1d1d1;
+            --charcoal-300: #b0b0b0;
+            --charcoal-400: #888888;
+            --charcoal-500: #6d6d6d;
+            --charcoal-600: #5d5d5d;
+            --charcoal-700: #4f4f4f;
+            --charcoal-800: #454545;
+            --charcoal-900: #3d3d3d;
+            
+            --accent-green: #22c55e;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+        }
+        
+        * {
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--sage-50) 0%, var(--charcoal-50) 100%);
+            min-height: 100vh;
+        }
+        
+        .font-display {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 8px 16px;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--sage-700);
+            font-weight: 600;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--sage-700), var(--charcoal-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #vanta-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .config-card {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--accent-green);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .range-slider:hover {
+            opacity: 1;
+        }
+        
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            cursor: pointer;
+        }
+        
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="relative z-10 glass-effect border-b border-white/20 mb-8">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-display text-xl font-bold gradient-text">Energy Action Models</h1>
+                        <p class="text-sm text-charcoal-600">System Configuration</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-1">
+                    <a href="index.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Dashboard</a>
+                    <a href="analytics.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Analytics</a>
+                    <a href="configuration.html" class="nav-link active">Configuration</a>
+                    <a href="reports.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Reports</a>
+                    <a href="trading.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Energy Trading</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h2 class="font-display text-3xl font-bold text-charcoal-900 mb-2">System Configuration</h2>
+            <p class="text-charcoal-600">Customize and optimize your Energy Action Models deployment</p>
+        </div>
+
+        <!-- Configuration Sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- System Settings -->
+            <div class="config-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">System Settings</h3>
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">Auto-optimization</h4>
+                            <p class="text-xs text-charcoal-600">Enable automatic system optimization</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked onchange="toggleAutoOptimization(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">Predictive Maintenance</h4>
+                            <p class="text-xs text-charcoal-600">AI-powered maintenance scheduling</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked onchange="togglePredictiveMaintenance(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">Real-time Alerts</h4>
+                            <p class="text-xs text-charcoal-600">Instant notifications for critical events</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked onchange="toggleRealTimeAlerts(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">Data Logging</h4>
+                            <p class="text-xs text-charcoal-600">Comprehensive data collection</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked onchange="toggleDataLogging(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">Grid Integration</h4>
+                            <p class="text-xs text-charcoal-600">Smart grid connectivity</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="toggleGridIntegration(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Tuning -->
+            <div class="config-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Performance Tuning</h3>
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-charcoal-900">Sampling Rate</label>
+                            <span class="text-sm text-charcoal-600" id="samplingRateValue">10 Hz</span>
+                        </div>
+                        <input type="range" min="1" max="100" value="10" class="range-slider" oninput="updateSamplingRate(this)">
+                        <p class="text-xs text-charcoal-600 mt-1">Data collection frequency</p>
+                    </div>
+                    
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-charcoal-900">Prediction Horizon</label>
+                            <span class="text-sm text-charcoal-600" id="predictionHorizonValue">30 minutes</span>
+                        </div>
+                        <input type="range" min="5" max="120" value="30" class="range-slider" oninput="updatePredictionHorizon(this)">
+                        <p class="text-xs text-charcoal-600 mt-1">How far ahead to predict</p>
+                    </div>
+                    
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-charcoal-900">Alert Threshold</label>
+                            <span class="text-sm text-charcoal-600" id="alertThresholdValue">85%</span>
+                        </div>
+                        <input type="range" min="50" max="100" value="85" class="range-slider" oninput="updateAlertThreshold(this)">
+                        <p class="text-xs text-charcoal-600 mt-1">SoH threshold for alerts</p>
+                    </div>
+                    
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-charcoal-900">Optimization Aggressiveness</label>
+                            <span class="text-sm text-charcoal-600" id="optimizationValue">Medium</span>
+                        </div>
+                        <input type="range" min="1" max="5" value="3" class="range-slider" oninput="updateOptimization(this)">
+                        <p class="text-xs text-charcoal-600 mt-1">Balance between performance and longevity</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Configuration -->
+            <div class="config-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Model Configuration</h3>
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="text-sm font-medium text-charcoal-900">Primary Model</label>
+                        <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updatePrimaryModel(this)">
+                            <option value="neural-ode" selected>Neural ODE</option>
+                            <option value="lstm">LSTM</option>
+                            <option value="transformer">Transformer</option>
+                            <option value="ensemble">Ensemble</option>
+                        </select>
+                        <p class="text-xs text-charcoal-600 mt-1">Main predictive model architecture</p>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-medium text-charcoal-900">Feature Engineering</label>
+                        <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateFeatureEngineering(this)">
+                            <option value="comprehensive" selected>Comprehensive</option>
+                            <option value="basic">Basic</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                        <p class="text-xs text-charcoal-600 mt-1">Level of feature engineering</p>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-medium text-charcoal-900">Training Frequency</label>
+                        <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateTrainingFrequency(this)">
+                            <option value="daily">Daily</option>
+                            <option value="weekly" selected>Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="continuous">Continuous</option>
+                        </select>
+                        <p class="text-xs text-charcoal-600 mt-1">How often models are retrained</p>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">Online Learning</h4>
+                            <p class="text-xs text-charcoal-600">Adaptive model updates</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked onchange="toggleOnlineLearning(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="config-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Notifications</h3>
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM11 17H6l5 5v-5zM7 7h10a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">Email Alerts</h4>
+                            <p class="text-xs text-charcoal-600">Critical events via email</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked onchange="toggleEmailAlerts(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">SMS Alerts</h4>
+                            <p class="text-xs text-charcoal-600">Emergency notifications</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="toggleSMSAlerts(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="text-sm font-medium text-charcoal-900">Dashboard Alerts</h4>
+                            <p class="text-xs text-charcoal-600">In-app notifications</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked onchange="toggleDashboardAlerts(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-medium text-charcoal-900">Alert Email</label>
+                        <input type="email" value="admin@company.com" class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateAlertEmail(this)">
+                        <p class="text-xs text-charcoal-600 mt-1">Primary contact for alerts</p>
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-medium text-charcoal-900">Alert Frequency</label>
+                        <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateAlertFrequency(this)">
+                            <option value="immediate" selected>Immediate</option>
+                            <option value="hourly">Hourly Digest</option>
+                            <option value="daily">Daily Summary</option>
+                            <option value="weekly">Weekly Report</option>
+                        </select>
+                        <p class="text-xs text-charcoal-600 mt-1">How often to send alerts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Configuration -->
+        <div class="mt-8 config-card rounded-2xl p-6 card-hover">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900">Advanced Configuration</h3>
+                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Max Charging Current</label>
+                    <input type="number" value="50" min="10" max="200" class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateMaxCurrent(this)">
+                    <p class="text-xs text-charcoal-600 mt-1">Amperes (A)</p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Temperature Limit</label>
+                    <input type="number" value="45" min="20" max="80" class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateTempLimit(this)">
+                    <p class="text-xs text-charcoal-600 mt-1">Celsius (°C)</p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Voltage Range</label>
+                    <input type="text" value="3.0-4.2" class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateVoltageRange(this)">
+                    <p class="text-xs text-charcoal-600 mt-1">Min-Max (V)</p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Data Retention</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateDataRetention(this)">
+                        <option value="30">30 Days</option>
+                        <option value="90" selected>90 Days</option>
+                        <option value="180">6 Months</option>
+                        <option value="365">1 Year</option>
+                    </select>
+                    <p class="text-xs text-charcoal-600 mt-1">Historical data storage</p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">API Rate Limit</label>
+                    <input type="number" value="1000" min="100" max="10000" class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateRateLimit(this)">
+                    <p class="text-xs text-charcoal-600 mt-1">Requests per hour</p>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-charcoal-900">Backup Frequency</label>
+                    <select class="w-full mt-1 p-2 border border-gray-300 rounded-lg text-sm" onchange="updateBackupFrequency(this)">
+                        <option value="hourly">Hourly</option>
+                        <option value="daily" selected>Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                    <p class="text-xs text-charcoal-600 mt-1">System backup schedule</p>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4 mt-8">
+                <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" onclick="saveConfiguration()">
+                    Save Configuration
+                </button>
+                <button class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors" onclick="testConfiguration()">
+                    Test Configuration
+                </button>
+                <button class="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors" onclick="resetConfiguration()">
+                    Reset to Defaults
+                </button>
+                <button class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors" onclick="exportConfiguration()">
+                    Export Config
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Vanta.js background
+        VANTA.BIRDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            backgroundColor: 0xf6f7f6,
+            color1: 0x7a907a,
+            color2: 0x5c7359,
+            colorMode: 'lerpGradient',
+            birdSize: 1.2,
+            wingSpan: 25.00,
+            speedLimit: 3.00,
+            separation: 20.00,
+            alignment: 20.00,
+            cohesion: 20.00,
+            quantity: 3.00
+        });
+
+        // Configuration state
+        const config = {
+            autoOptimization: true,
+            predictiveMaintenance: true,
+            realTimeAlerts: true,
+            dataLogging: true,
+            gridIntegration: false,
+            samplingRate: 10,
+            predictionHorizon: 30,
+            alertThreshold: 85,
+            optimization: 3,
+            primaryModel: 'neural-ode',
+            featureEngineering: 'comprehensive',
+            trainingFrequency: 'weekly',
+            onlineLearning: true,
+            emailAlerts: true,
+            smsAlerts: false,
+            dashboardAlerts: true,
+            alertEmail: 'admin@company.com',
+            alertFrequency: 'immediate',
+            maxCurrent: 50,
+            tempLimit: 45,
+            voltageRange: '3.0-4.2',
+            dataRetention: 90,
+            rateLimit: 1000,
+            backupFrequency: 'daily'
+        };
+
+        // Toggle functions
+        function toggleAutoOptimization(checkbox) {
+            config.autoOptimization = checkbox.checked;
+            showNotification(`Auto-optimization ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function togglePredictiveMaintenance(checkbox) {
+            config.predictiveMaintenance = checkbox.checked;
+            showNotification(`Predictive maintenance ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function toggleRealTimeAlerts(checkbox) {
+            config.realTimeAlerts = checkbox.checked;
+            showNotification(`Real-time alerts ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function toggleDataLogging(checkbox) {
+            config.dataLogging = checkbox.checked;
+            showNotification(`Data logging ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function toggleGridIntegration(checkbox) {
+            config.gridIntegration = checkbox.checked;
+            showNotification(`Grid integration ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function toggleOnlineLearning(checkbox) {
+            config.onlineLearning = checkbox.checked;
+            showNotification(`Online learning ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function toggleEmailAlerts(checkbox) {
+            config.emailAlerts = checkbox.checked;
+            showNotification(`Email alerts ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function toggleSMSAlerts(checkbox) {
+            config.smsAlerts = checkbox.checked;
+            showNotification(`SMS alerts ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        function toggleDashboardAlerts(checkbox) {
+            config.dashboardAlerts = checkbox.checked;
+            showNotification(`Dashboard alerts ${checkbox.checked ? 'enabled' : 'disabled'}`, 'success');
+        }
+
+        // Update functions for sliders
+        function updateSamplingRate(slider) {
+            config.samplingRate = slider.value;
+            document.getElementById('samplingRateValue').textContent = `${slider.value} Hz`;
+        }
+
+        function updatePredictionHorizon(slider) {
+            config.predictionHorizon = slider.value;
+            document.getElementById('predictionHorizonValue').textContent = `${slider.value} minutes`;
+        }
+
+        function updateAlertThreshold(slider) {
+            config.alertThreshold = slider.value;
+            document.getElementById('alertThresholdValue').textContent = `${slider.value}%`;
+        }
+
+        function updateOptimization(slider) {
+            config.optimization = slider.value;
+            const levels = ['Very Low', 'Low', 'Medium', 'High', 'Very High'];
+            document.getElementById('optimizationValue').textContent = levels[slider.value - 1];
+        }
+
+        // Update functions for selects
+        function updatePrimaryModel(select) {
+            config.primaryModel = select.value;
+            showNotification(`Primary model changed to ${select.value}`, 'info');
+        }
+
+        function updateFeatureEngineering(select) {
+            config.featureEngineering = select.value;
+            showNotification(`Feature engineering set to ${select.value}`, 'info');
+        }
+
+        function updateTrainingFrequency(select) {
+            config.trainingFrequency = select.value;
+            showNotification(`Training frequency set to ${select.value}`, 'info');
+        }
+
+        function updateAlertFrequency(select) {
+            config.alertFrequency = select.value;
+            showNotification(`Alert frequency set to ${select.value}`, 'info');
+        }
+
+        function updateAlertEmail(input) {
+            config.alertEmail = input.value;
+            showNotification(`Alert email updated to ${input.value}`, 'info');
+        }
+
+        // Advanced configuration functions
+        function updateMaxCurrent(input) {
+            config.maxCurrent = input.value;
+            showNotification(`Max charging current set to ${input.value}A`, 'info');
+        }
+
+        function updateTempLimit(input) {
+            config.tempLimit = input.value;
+            showNotification(`Temperature limit set to ${input.value}°C`, 'info');
+        }
+
+        function updateVoltageRange(input) {
+            config.voltageRange = input.value;
+            showNotification(`Voltage range updated to ${input.value}V`, 'info');
+        }
+
+        function updateDataRetention(select) {
+            config.dataRetention = select.value;
+            showNotification(`Data retention set to ${select.value} days`, 'info');
+        }
+
+        function updateRateLimit(input) {
+            config.rateLimit = input.value;
+            showNotification(`API rate limit set to ${input.value} requests/hour`, 'info');
+        }
+
+        function updateBackupFrequency(select) {
+            config.backupFrequency = select.value;
+            showNotification(`Backup frequency set to ${select.value}`, 'info');
+        }
+
+        // Action functions
+        function saveConfiguration() {
+            showNotification('Saving configuration...', 'info');
+            setTimeout(() => {
+                showNotification('Configuration saved successfully!', 'success');
+            }, 1500);
+        }
+
+        function testConfiguration() {
+            showNotification('Testing configuration...', 'info');
+            setTimeout(() => {
+                showNotification('Configuration test passed!', 'success');
+            }, 2000);
+        }
+
+        function resetConfiguration() {
+            if (confirm('Are you sure you want to reset all configurations to defaults?')) {
+                showNotification('Resetting configuration...', 'warning');
+                setTimeout(() => {
+                    showNotification('Configuration reset to defaults!', 'success');
+                }, 1500);
+            }
+        }
+
+        function exportConfiguration() {
+            showNotification('Exporting configuration...', 'info');
+            setTimeout(() => {
+                const configData = JSON.stringify(config, null, 2);
+                const blob = new Blob([configData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'eam_configuration.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showNotification('Configuration exported successfully!', 'success');
+            }, 1000);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+            
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                info: 'bg-blue-500 text-white',
+                warning: 'bg-orange-500 text-white'
+            };
+            
+            notification.className += ` ${colors[type]}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Add hover effects to config cards
+        document.querySelectorAll('.config-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.15)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '';
+            });
+        });
+    </script>
+</body>
+</html>

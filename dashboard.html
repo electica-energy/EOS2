@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Action Models - Intelligent Battery Management Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.birds.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sage-50: #f6f7f6;
+            --sage-100: #e3e7e3;
+            --sage-200: #c7d0c7;
+            --sage-300: #a3b3a3;
+            --sage-400: #7a907a;
+            --sage-500: #5c7359;
+            --sage-600: #495d47;
+            --sage-700: #3d4d3b;
+            --sage-800: #334032;
+            --sage-900: #2b352b;
+            
+            --charcoal-50: #f6f6f6;
+            --charcoal-100: #e7e7e7;
+            --charcoal-200: #d1d1d1;
+            --charcoal-300: #b0b0b0;
+            --charcoal-400: #888888;
+            --charcoal-500: #6d6d6d;
+            --charcoal-600: #5d5d5d;
+            --charcoal-700: #4f4f4f;
+            --charcoal-800: #454545;
+            --charcoal-900: #3d3d3d;
+            
+            --accent-green: #22c55e;
+            --accent-blue: #3b82f6;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--sage-50) 0%, var(--charcoal-50) 100%);
+            min-height: 100vh;
+        }
+        
+        .font-display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background-color: var(--accent-green); }
+        .status-warning { background-color: var(--accent-orange); }
+        .status-critical { background-color: var(--accent-red); }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 8px 16px;
+            color: var(--charcoal-600);
+            text-decoration: none;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            color: var(--charcoal-900);
+        }
+        
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--sage-700);
+            font-weight: 600;
+        }
+        
+        .layer-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--sage-700), var(--charcoal-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        #vanta-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="relative z-10 glass-effect border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-display text-xl font-bold gradient-text">Energy Action Models</h1>
+                        <p class="text-sm text-charcoal-600">Intelligent Battery Management Platform</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-1">
+                    <a href="dashboard.html" class="nav-link active">Dashboard</a>
+                    <a href="analytics.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Analytics</a>
+                    <a href="configuration.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Configuration</a>
+                    <a href="reports.html" class="nav-link text-charcoal-600 hover:text-charcoal-900">Reports</a>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-healthy animate-pulse-slow"></div>
+                        <span class="text-sm text-charcoal-600">System Active</span>
+                    </div>
+                    <div class="text-sm text-charcoal-600">
+                        <span class="font-medium">Fleet:</span> 247 Assets
+                    </div>
+                    <div class="text-sm text-charcoal-600">
+                        <span class="font-medium">Uptime:</span> 99.8%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        <!-- Overview Stats -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-charcoal-600">Total Capacity</h3>
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold text-charcoal-900 mb-1">1.24 GWh</div>
+                <div class="text-sm text-green-600 flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>
+                    </svg>
+                    +12% from last month
+                </div>
+            </div>
+            
+            <div class="metric-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-charcoal-600">Avg SoH</h3>
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold text-charcoal-900 mb-1">94.2%</div>
+                <div class="text-sm text-blue-600 flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Excellent condition
+                </div>
+            </div>
+            
+            <div class="metric-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-charcoal-600">Efficiency</h3>
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold text-charcoal-900 mb-1">96.8%</div>
+                <div class="text-sm text-orange-600 flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17l9.2-9.2M17 17V7H7"/>
+                    </svg>
+                    Above target
+                </div>
+            </div>
+            
+            <div class="metric-card rounded-2xl p-6 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-charcoal-600">Predicted RUL</h3>
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="text-2xl font-bold text-charcoal-900 mb-1">4.2 years</div>
+                <div class="text-sm text-purple-600 flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    AI optimized
+                </div>
+            </div>
+        </section>
+
+        <!-- EAM Architecture Layers -->
+        <section class="mb-8">
+            <h2 class="font-display text-2xl font-bold text-charcoal-900 mb-6">EAM Architecture Status</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Foundation Layer -->
+                <div class="layer-card rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-display text-lg font-semibold text-charcoal-900">Foundation Layer</h3>
+                                <p class="text-sm text-charcoal-600">Data Acquisition & Simulation</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator status-healthy"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Digital Twins Active</span>
+                            <span class="font-medium text-charcoal-900">247/247</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Sensor Streams</span>
+                            <span class="font-medium text-charcoal-900">1,234 Hz</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Data Quality</span>
+                            <span class="font-medium text-green-600">99.7%</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p class="text-xs text-blue-700">
+                            <strong>PyBaMM Simulation:</strong> Real-time electrochemical modeling active for all battery packs
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Perception Layer -->
+                <div class="layer-card rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-display text-lg font-semibold text-charcoal-900">Perception Layer</h3>
+                                <p class="text-sm text-charcoal-600">Predictive Intelligence</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator status-healthy"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">SoC Accuracy</span>
+                            <span class="font-medium text-charcoal-900">±1.2%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Anomaly Detection</span>
+                            <span class="font-medium text-green-600">Active</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">RUL Predictions</span>
+                            <span class="font-medium text-charcoal-900">Neural ODE</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-green-50 rounded-lg">
+                        <p class="text-xs text-green-700">
+                            <strong>Transformer Model:</strong> Thermal forecasting with 30-minute prediction horizon
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Decision Layer -->
+                <div class="layer-card rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-display text-lg font-semibold text-charcoal-900">Decision Layer</h3>
+                                <p class="text-sm text-charcoal-600">Adaptive Planning</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator status-healthy"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Mixture-of-Experts</span>
+                            <span class="font-medium text-charcoal-900">8 Active</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">RL Policies</span>
+                            <span class="font-medium text-green-600">Learning</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Optimization</span>
+                            <span class="font-medium text-charcoal-900">Real-time</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-purple-50 rounded-lg">
+                        <p class="text-xs text-purple-700">
+                            <strong>Contextual Bandits:</strong> Continuously optimizing charging strategies for cost and longevity
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Action Layer -->
+                <div class="layer-card rounded-2xl p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-display text-lg font-semibold text-charcoal-900">Action Layer</h3>
+                                <p class="text-sm text-charcoal-600">Real-Time Control</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator status-healthy"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Active Controls</span>
+                            <span class="font-medium text-charcoal-900">156</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Safety Overrides</span>
+                            <span class="font-medium text-green-600">0 Active</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-charcoal-600">Response Time</span>
+                            <span class="font-medium text-charcoal-900">&lt;100ms</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-orange-50 rounded-lg">
+                        <p class="text-xs text-orange-700">
+                            <strong>LAM Controller:</strong> Logic Action Manager executing 47 optimization commands
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Real-time Analytics -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Battery Health Trends -->
+            <div class="glass-effect rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Battery Health Trends</h3>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors">24H</button>
+                        <button class="px-3 py-1 text-xs bg-sage-600 text-white rounded-lg">7D</button>
+                        <button class="px-3 py-1 text-xs bg-white/50 rounded-lg text-charcoal-600 hover:bg-white/70 transition-colors">30D</button>
+                    </div>
+                </div>
+                <div id="healthChart" class="h-64"></div>
+            </div>
+
+            <!-- Thermal Management -->
+            <div class="glass-effect rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-display text-lg font-semibold text-charcoal-900">Thermal Management</h3>
+                    <div class="status-indicator status-healthy"></div>
+                </div>
+                <div id="thermalChart" class="h-64"></div>
+            </div>
+        </section>
+
+        <!-- Fleet Status & Alerts -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Active Assets -->
+            <div class="glass-effect rounded-2xl p-6">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900 mb-4">Active Assets</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="status-indicator status-healthy"></div>
+                            <div>
+                                <p class="text-sm font-medium text-charcoal-900">EV Bus Fleet A</p>
+                                <p class="text-xs text-charcoal-600">45 vehicles • 98.2% SoH</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-green-600 font-medium">Optimal</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="status-indicator status-healthy"></div>
+                            <div>
+                                <p class="text-sm font-medium text-charcoal-900">Grid Storage Mumbai</p>
+                                <p class="text-xs text-charcoal-600">12 units • 96.1% SoH</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-green-600 font-medium">Optimal</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="status-indicator status-warning"></div>
+                            <div>
+                                <p class="text-sm font-medium text-charcoal-900">Delivery Drones</p>
+                                <p class="text-xs text-charcoal-600">89 units • 87.3% SoH</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-orange-600 font-medium">Maintenance</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-white/30 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="status-indicator status-healthy"></div>
+                            <div>
+                                <p class="text-sm font-medium text-charcoal-900">Private EVs</p>
+                                <p class="text-xs text-charcoal-600">101 vehicles • 93.7% SoH</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-green-600 font-medium">Optimal</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Alerts -->
+            <div class="glass-effect rounded-2xl p-6">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900 mb-4">Recent Alerts</h3>
+                <div class="space-y-3">
+                    <div class="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-medium text-orange-800">Thermal Anomaly</span>
+                            <span class="text-xs text-orange-600">2m ago</span>
+                        </div>
+                        <p class="text-xs text-orange-700">Battery pack 47 showing unusual heat pattern. Cooling activated.</p>
+                    </div>
+                    
+                    <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-medium text-blue-800">Optimization Applied</span>
+                            <span class="text-xs text-blue-600">15m ago</span>
+                        </div>
+                        <p class="text-xs text-blue-700">Charging schedule optimized for 23 vehicles based on grid tariff.</p>
+                    </div>
+                    
+                    <div class="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-medium text-green-800">Maintenance Complete</span>
+                            <span class="text-xs text-green-600">1h ago</span>
+                        </div>
+                        <p class="text-xs text-green-700">Battery pack 156 maintenance completed. SoH improved by 2.3%.</p>
+                    </div>
+                    
+                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-medium text-yellow-800">Predictive Alert</span>
+                            <span class="text-xs text-yellow-600">3h ago</span>
+                        </div>
+                        <p class="text-xs text-yellow-700">RUL model predicts 3 batteries need attention within 30 days.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Actions -->
+            <div class="glass-effect rounded-2xl p-6">
+                <h3 class="font-display text-lg font-semibold text-charcoal-900 mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <button class="w-full p-3 bg-white/50 hover:bg-white/70 rounded-lg text-left transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-charcoal-900">Emergency Shutdown</p>
+                                <p class="text-xs text-charcoal-600">Immediate safety override</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button class="w-full p-3 bg-white/50 hover:bg-white/70 rounded-lg text-left transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-charcoal-900">Run Diagnostics</p>
+                                <p class="text-xs text-charcoal-600">Comprehensive health check</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button class="w-full p-3 bg-white/50 hover:bg-white/70 rounded-lg text-left transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-charcoal-900">Optimize All</p>
+                                <p class="text-xs text-charcoal-600">Fleet-wide optimization</p>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button class="w-full p-3 bg-white/50 hover:bg-white/70 rounded-lg text-left transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-charcoal-900">Generate Report</p>
+                                <p class="text-xs text-charcoal-600">Performance analytics</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Initialize Vanta.js background
+        VANTA.BIRDS({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            backgroundColor: 0xf6f7f6,
+            color1: 0x7a907a,
+            color2: 0x5c7359,
+            colorMode: 'lerpGradient',
+            birdSize: 1.2,
+            wingSpan: 25.00,
+            speedLimit: 3.00,
+            separation: 20.00,
+            alignment: 20.00,
+            cohesion: 20.00,
+            quantity: 3.00
+        });
+
+        // Battery Health Trends Chart
+        const healthData = [
+            {
+                x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                y: [94.2, 94.1, 94.3, 94.0, 94.4, 94.2, 94.5],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Average SoH',
+                line: { color: '#22c55e', width: 3 },
+                marker: { color: '#22c55e', size: 8 }
+            },
+            {
+                x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                y: [96.8, 96.5, 97.1, 96.9, 97.2, 96.8, 97.0],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Efficiency',
+                line: { color: '#3b82f6', width: 3 },
+                marker: { color: '#3b82f6', size: 8 }
+            }
+        ];
+
+        const healthLayout = {
+            margin: { t: 20, r: 20, b: 40, l: 50 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            xaxis: { 
+                gridcolor: 'rgba(0,0,0,0.1)',
+                showgrid: true,
+                zeroline: false
+            },
+            yaxis: { 
+                gridcolor: 'rgba(0,0,0,0.1)',
+                showgrid: true,
+                zeroline: false,
+                range: [85, 100]
+            },
+            legend: {
+                x: 0,
+                y: 1,
+                bgcolor: 'rgba(255,255,255,0.8)',
+                bordercolor: 'rgba(0,0,0,0.1)',
+                borderwidth: 1
+            }
+        };
+
+        Plotly.newPlot('healthChart', healthData, healthLayout, {displayModeBar: false, responsive: true});
+
+        // Thermal Management Chart
+        const thermalData = [
+            {
+                x: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                y: [28, 26, 32, 38, 42, 35, 30],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Battery Temp',
+                line: { color: '#f59e0b', width: 3 },
+                marker: { color: '#f59e0b', size: 8 }
+            },
+            {
+                x: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                y: [24, 22, 28, 34, 36, 32, 26],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Ambient Temp',
+                line: { color: '#6b7280', width: 2, dash: 'dash' }
+            }
+        ];
+
+        const thermalLayout = {
+            margin: { t: 20, r: 20, b: 40, l: 50 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            xaxis: { 
+                gridcolor: 'rgba(0,0,0,0.1)',
+                showgrid: true,
+                zeroline: false
+            },
+            yaxis: { 
+                gridcolor: 'rgba(0,0,0,0.1)',
+                showgrid: true,
+                zeroline: false,
+                title: 'Temperature (°C)'
+            },
+            legend: {
+                x: 0,
+                y: 1,
+                bgcolor: 'rgba(255,255,255,0.8)',
+                bordercolor: 'rgba(0,0,0,0.1)',
+                borderwidth: 1
+            }
+        };
+
+        Plotly.newPlot('thermalChart', thermalData, thermalLayout, {displayModeBar: false, responsive: true});
+
+        // Simulate real-time updates
+        setInterval(() => {
+            // Update status indicators with subtle animation
+            const indicators = document.querySelectorAll('.status-indicator');
+            indicators.forEach(indicator => {
+                indicator.style.opacity = '0.7';
+                setTimeout(() => {
+                    indicator.style.opacity = '1';
+                }, 200);
+            });
+        }, 5000);
+
+        // Quick Action Functions
+        function triggerEmergencyShutdown() {
+            if (confirm('Are you sure you want to trigger emergency shutdown? This will immediately stop all charging operations.')) {
+                showNotification('Emergency shutdown activated! All systems entering safe mode.', 'warning');
+            }
+        }
+
+        function runDiagnostics() {
+            showNotification('Running comprehensive system diagnostics...', 'info');
+            setTimeout(() => {
+                showNotification('Diagnostics complete! System health: Optimal', 'success');
+            }, 3000);
+        }
+
+        function optimizeAll() {
+            showNotification('Initiating fleet-wide optimization...', 'info');
+            setTimeout(() => {
+                showNotification('Optimization complete! Efficiency improved by 2.3%', 'success');
+            }, 2500);
+        }
+
+        function generateReport() {
+            showNotification('Generating comprehensive performance report...', 'info');
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = 'data:text/plain;charset=utf-8,EAM Performance Report - Generated ' + new Date().toISOString();
+                link.download = 'eam_performance_report.pdf';
+                link.click();
+                showNotification('Report generated and downloaded!', 'success');
+            }, 2000);
+        }
+
+        // Add hover effects to metric cards
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.15)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '';
+            });
+        });
+    </script>
+</body>
+</html>
