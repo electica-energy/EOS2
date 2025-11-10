@@ -210,8 +210,5 @@ The platform is deployed and accessible at:
 
 This dashboard represents a complete, production-ready energy management and trading platform that demonstrates the full capabilities of modern web technologies combined with sophisticated energy trading algorithms and AI-powered battery intelligence.
 
-**Platform URL:** https://kmeplgqrr5jlu.ok.kimi.link
-
----
 
 *Built with ❤️ using modern web technologies and energy trading expertise.*
